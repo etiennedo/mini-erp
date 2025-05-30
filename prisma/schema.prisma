@@ -84,6 +84,7 @@ model Product {
   inventoryQuantity   Int
   minQuantity         Int
   userId        String
+  createdAt     DateTime @default(now())
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
 }
