@@ -1,7 +1,8 @@
 import { getProducts } from "./actions"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import type { Product } from "../app/generated/prisma/index"
+import type { Product } from "@/prisma/generated/prisma/index"
+import { SignOutButton } from "@/components/signout-button"
 
 export default async function Home() {
   const { products, error } = await getProducts()
@@ -29,9 +30,12 @@ export default async function Home() {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Products</h1>
-        <Link href="/products/create">
-          <Button>Create Product</Button>
-        </Link>
+        <div className="flex justify-end gap-2 pr-2">
+          <Link href="/products/create">
+            <Button>Create Product</Button>
+          </Link>
+          <SignOutButton />
+        </div>
       </div>
 
       {error ? (
