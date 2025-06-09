@@ -1,7 +1,7 @@
 "use server"
 
-import { PrismaClient } from "./generated/prisma"
-import { auth } from "../lib/auth"
+import { PrismaClient } from "@/prisma/generated/prisma"
+import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 
 const prisma = new PrismaClient()

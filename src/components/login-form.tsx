@@ -12,69 +12,61 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authClient } from "../../lib/auth-client"
+import { authClient } from "@/lib/auth-client"
 
 type FormType = "login" | "signup"
 
 export function LoginForm({
     className,
-    formType = "login", // default to login
+    formType = "login",
     ...props
 }: React.ComponentProps<"div"> & { formType?: FormType }) {
-  // state to store form data
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setLoading(true)
+    setErrorMessage(null)
 
+  try {
     if (formType === "signup") {
-      try {
-        const { data, error } = await authClient.signUp.email({
-          email,        // user email address
-          password,     // user password -> min 8 characters by default
-          name,         // user display name
-          callbackURL: "/" // URL to redirect after verification
-        }, {
-          onRequest: (ctx) => {
-            // show loading indicator
-          },
-          onSuccess: (ctx) => {
-            // redirect to the dashboard or sign in page
-          },
-          onError: (ctx) => {
-            // display the error message
-            alert(ctx.error.message)
-          },
-        })
-      } catch (err) {
-        console.error(err)
-      }
-    } else if (formType === 'login' ) {
-      const { data, error } = await authClient.signIn.email({
-        /**
-         * The user email
-         */
+      const { data, error } = await authClient.signUp.email({
         email,
-        /**
-         * The user password
-         */
         password,
-        /**
-         * A URL to redirect to after the user verifies their email (optional)
-         */
+        name,
+        callbackURL: "/"
+      }, {
+        onRequest: (ctx) => {},
+        onSuccess: (ctx) => {},
+        onError: (ctx) => {
+          setErrorMessage(ctx.error?.message || "An unknown error occurred.")
+        },
+      })
+      if (error) setErrorMessage(error?.message || "An unknown error occurred.")
+    } else if (formType === 'login') {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
         callbackURL: "/",
-        /**
-         * remember the user session after the browser is closed. 
-         * @default true
-         */
         rememberMe: false
       }, {
-          //callbacks
+        onError: (ctx) => {
+          setErrorMessage(ctx.error?.message || "An unknown error occurred.")
+        }
       })
+      if (error) setErrorMessage(error?.message || "An unknown error occurred.")
     }
+  } catch (err) {
+    setErrorMessage("An unknown error occurred.")
+    console.error(err)
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -92,6 +84,11 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
+              {errorMessage && (
+                <div className="text-red-600 text-sm mb-4 text-center">
+                  {errorMessage}
+                </div>
+              )}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -140,14 +137,19 @@ export function LoginForm({
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
-                  {formType === "login" ? "Login" : "Sign up"}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Loading...
+                    </span>
+                  ) : (
+                    formType === "login" ? "Login" : "Sign up"
+                  )}
                 </Button>
-                {formType === "login" && (
-                  <Button variant="outline" className="w-full">
-                    Login with Google
-                  </Button>
-                )}
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
